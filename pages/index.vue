@@ -13,17 +13,22 @@
     </section>
 
     <section>
-        <Transaction v-for="transaction in transactions" :key="transaction" :transaction="transaction"/>
+        <div v-for="(transactionOnDay, date) in transactionsGroupedByDate" :key="date" class="mb-10">
+					<DayliTransactionSumary :transactions="transactionOnDay" :date="date" />
+					<Transaction v-for="transaction in transactionOnDay" :key="transaction" :transaction="transaction" @delete-transaction="onDeleteTransaction" :is-loading="deleteLoading"/>
+				</div>
     </section>
 </template>
 
 <script setup>
 import { transactionViewOptions } from '~/constants'
-const selectedView = ref(transactionViewOptions[1])
-
-const transactions = ref([])
 
 const supabase = useSupabaseClient()
+const toast = useToast()
+
+const selectedView = ref(transactionViewOptions[1])
+const transactions = ref([])
+const deleteLoading = ref(false)
 
 const { data } = await useAsyncData('transactions', async () => {
   const { data, error } = await supabase
@@ -34,4 +39,40 @@ const { data } = await useAsyncData('transactions', async () => {
 }
 )
 transactions.value = data.value
+
+const transactionsGroupedByDate = computed(() => {
+	let grouped = {}
+	for(const transaction of transactions.value) {
+		const date = new Date(transaction.created_at).toISOString().split('T')[0]
+		if(!grouped[date]){
+			grouped[date] = []
+		}
+		grouped[date].push(transaction)
+	}
+	return grouped
+})
+
+
+const onDeleteTransaction = async (transactionId) => {
+	deleteLoading.value = true
+	try {
+		const response = await supabase
+		.from('transactions')
+		.delete()
+		.eq('id', transactionId);
+
+		toast.add({
+		title: 'Transação Deletada.',
+		icon: 'i-heroicons-check-circle',
+		})
+	} catch (error) {
+		toast.add({
+		title: 'Transação Deletada.',
+		icon: 'i-heroicons-exclamation-circle',
+		})
+		
+	} finally {
+		deleteLoading.value = false
+	}
+}
 </script>

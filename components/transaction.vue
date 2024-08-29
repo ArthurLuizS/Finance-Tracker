@@ -13,7 +13,7 @@
 			<div>{{ currency }}</div>
 			<div>
 				<UDropdown :items="items" :popper="{ placement: 'bottom-start' }">
-					<UButton color="white" variant="ghost" trailing-icon="i-heroicons-ellipsis-horizontal" />
+					<UButton color="white" variant="ghost" trailing-icon="i-heroicons-ellipsis-horizontal" :loading="isLoading" />
   			</UDropdown>
 			</div>
 		</div>
@@ -22,9 +22,17 @@
 
 <script setup>
 const props = defineProps({
+	isLoading: Boolean,
 	transaction: Object
 })
+
+const emits = defineEmits(["DeleteTransaction"])
+
 const { currency } = useCurrency(props.transaction.amount);
+
+const deleteTransaction = () => {
+	emits("DeleteTransaction", props.transaction.id)
+}
 const items = [
 [
     {
@@ -35,7 +43,7 @@ const items = [
     {
       label: 'Delete',
       icon: 'i-heroicons-trash-20-solid',
-      click: () => console.log('Delete')
+      click: deleteTransaction
     }
   ]
 ]
@@ -45,5 +53,6 @@ const isInCome = computed(() => props.transaction.type === 'Renda')
 const icon = computed(() => isInCome.value ? 'i-heroicons-arrow-up-right' : 'i-heroicons-arrow-down-left')
 
 const iconColor = computed(() => isInCome.value ? 'text-green-600' : 'text-red-600')
+
 
 </script>
