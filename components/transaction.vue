@@ -2,11 +2,11 @@
 	<div class="grid grid-cols-2 py-4 border-b">
 		<div class="flex justify-between">
 			<div class="flex items-center space-x-1">
-				<UIcon name="i-heroicons-arrow-up-right" class="text-green-600"/>
-				<div>Salário</div>
+				<UIcon :name="icon" :class="[iconColor]"/>
+				<div>{{ transaction.description }}</div>
 			</div>
 			<div>
-				<UBadge color="white">Categoria</UBadge>
+				<UBadge color="white" v-if="transaction.category"> {{ transaction.category }}</UBadge>
 			</div>
 		</div>
 		<div class="flex justify-end space-x-2">
@@ -21,7 +21,10 @@
 </template>
 
 <script setup>
-const { currency } = useCurrency(300);
+const props = defineProps({
+	transaction: Object
+})
+const { currency } = useCurrency(props.transaction.amount);
 const items = [
 [
     {
@@ -36,4 +39,11 @@ const items = [
     }
   ]
 ]
+
+const isInCome = computed(() => props.transaction.type === 'Renda')
+
+const icon = computed(() => isInCome.value ? 'i-heroicons-arrow-up-right' : 'i-heroicons-arrow-down-left')
+
+const iconColor = computed(() => isInCome.value ? 'text-green-600' : 'text-red-600')
+
 </script>
