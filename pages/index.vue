@@ -6,16 +6,19 @@
         </div>
     </section>
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 sm:gap-16 mb-10">
-        <Trend title="inCome" :amount="0" :last-amount="3000" :loading="false" color="green" />
-        <Trend title="inCome" :amount="400" :last-amount="3000" :loading="false" color="red" />
-        <Trend title="inCome" :amount="400" :last-amount="3000" :loading="false" color="green" />
-        <Trend title="inCome" :amount="400" :last-amount="3000" :loading="false" color="red" />
+        <Trend title="inCome" :amount="0" :last-amount="3000" :loading="loadingTransactions" color="green" />
+        <Trend title="inCome" :amount="400" :last-amount="3000" :loading="loadingTransactions" color="red" />
+        <Trend title="inCome" :amount="400" :last-amount="3000" :loading="loadingTransactions" color="green" />
+        <Trend title="inCome" :amount="400" :last-amount="3000" :loading="loadingTransactions" color="red" />
     </section>
 
     <section>
-        <div v-for="(transactionOnDay, date) in transactionsGroupedByDate" :key="date" class="mb-10">
+        <div v-for="(transactionOnDay, date) in transactionsGroupedByDate" :key="date" class="mb-10" v-if="!loadingTransactions">
 					<DayliTransactionSumary :transactions="transactionOnDay" :date="date" />
 					<Transaction v-for="transaction in transactionOnDay" :key="transaction" :transaction="transaction" @delete-transaction="onDeleteTransaction" :is-loading="deleteLoading"/>
+				</div>
+				<div v-else>
+					<USkeleton v-for="i in 4" :key="i" class="h-8 mb-2 w-full"/>
 				</div>
     </section>
 </template>
@@ -28,17 +31,27 @@ const toast = useToast()
 
 const selectedView = ref(transactionViewOptions[1])
 const transactions = ref([])
+const loadingTransactions = ref(false)
 const deleteLoading = ref(false)
 
-const { data } = await useAsyncData('transactions', async () => {
-  const { data, error } = await supabase
-  .from('transactions')
-  .select()
-	if(error) return []
-	return data
-}
-)
-transactions.value = data.value
+const fetchTransactions = async () => {
+	const { data } = await useAsyncData('transactions', async () => {
+		loadingTransactions.value = true
+		try {
+			const { data, error } = await supabase
+			.from('transactions')
+			.select()
+			if(error) return []
+			return data
+		} catch (error) {
+		} finally {
+			loadingTransactions.value = false
+		}
+	})
+	transactions.value = data.value
+} 
+
+await fetchTransactions();
 
 const transactionsGroupedByDate = computed(() => {
 	let grouped = {}
@@ -65,6 +78,7 @@ const onDeleteTransaction = async (transactionId) => {
 		title: 'Transação Deletada.',
 		icon: 'i-heroicons-check-circle',
 		})
+		await fetchTransactions();
 	} catch (error) {
 		toast.add({
 		title: 'Transação Deletada.',

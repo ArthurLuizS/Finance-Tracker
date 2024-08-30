@@ -26,12 +26,12 @@ const props = defineProps({
 	transaction: Object
 })
 
-const emits = defineEmits(["DeleteTransaction"])
+const emit = defineEmits(["DeleteTransaction"])
 
 const { currency } = useCurrency(props.transaction.amount);
 
 const deleteTransaction = () => {
-	emits("DeleteTransaction", props.transaction.id)
+	emit("DeleteTransaction", props.transaction.id)
 }
 const items = [
 [
