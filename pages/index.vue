@@ -31,7 +31,7 @@
       color="green"
     />
     <Trend
-      title="inCome"
+      title="Economia"
       :amount="400"
       :last-amount="3000"
       :loading="loadingTransactions"
