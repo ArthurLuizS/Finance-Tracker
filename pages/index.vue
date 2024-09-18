@@ -48,7 +48,7 @@
       </div>
     </div>
     <div>
-      <TransactionModal v-model="isOpen" />
+      <TransactionModal v-model="isOpen" @saved="fetchTransactions" />
       <UButton
         icon="i-heroicons-plus-circle"
         color="white"
@@ -115,7 +115,10 @@ const fetchTransactions = async () => {
   const { data } = await useAsyncData('transactions', async () => {
     loadingTransactions.value = true;
     try {
-      const { data, error } = await supabase.from('transactions').select();
+      const { data, error } = await supabase
+        .from('transactions')
+        .select()
+        .order('created_at', { ascending: false });
       if (error) return [];
       return data;
     } catch (error) {
@@ -137,6 +140,13 @@ const transactionsGroupedByDate = computed(() => {
     }
     grouped[date].push(transaction);
   }
+  // Ordenação de datas
+  // const sortedKeys = Object.keys(grouped).sort().reverse();
+  // const sortedGroup = {};
+  // for (const key of sortedKeys) {
+  //   sortedGroup[key] = grouped[key];
+  // }
+  // return sortedGroup;
   return grouped;
 });
 

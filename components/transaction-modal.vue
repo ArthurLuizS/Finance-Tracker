@@ -52,16 +52,22 @@
           label="Categoria"
           name="category"
           class="mb-4"
+          v-if="state.type === 'Despesa'"
         >
           <USelect
             placeholder="Categoria"
             :options="categories"
             v-model="state.category"
-            v-if="state.type === 'Despesa'"
           />
         </UFormGroup>
+        <UButton
+          type="submit"
+          color="black"
+          variant="solid"
+          label="Salvar"
+          :loading="isLoading"
+        />
       </UForm>
-      <UButton type="submit" color="black" variant="solid" label="Salvar" />
     </UCard>
   </UModal>
 </template>
@@ -69,6 +75,12 @@
 <script setup>
 import { categories, types } from '~/constants';
 import { z } from 'zod';
+
+const supabase = useSupabaseClient();
+const toast = useToast();
+
+const form = ref();
+const isLoading = ref(false);
 
 const defaultSchema = z.object({
   created_at: z.string(),
@@ -103,11 +115,37 @@ const schema = z.intersection(
   defaultSchema,
 );
 
-const form = ref();
-
 const save = async () => {
   form.value.validate();
   if (form.value.errors.length) return;
+  isLoading.value = true;
+  try {
+    const { error } = await supabase
+      .from('transactions')
+      .upsert({ ...state.value });
+
+    if (!error) {
+      toast.add({
+        title: 'Transação salva',
+        icon: 'i-heroicons-check-circle',
+      });
+      isOpen.value = false;
+      emit('saved');
+      return;
+    }
+    throw Error;
+  } catch (error) {
+    console.log('teste');
+    console.error(error);
+    toast.add({
+      title: 'Erro ao salvar Transação',
+      description: error.message,
+      icon: 'i-heroicons-exclamation-circle',
+      color: 'red',
+    });
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 const initialState = {
@@ -124,7 +162,7 @@ const props = defineProps({
   modelValue: Boolean,
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'saved']);
 
 const isOpen = computed({
   get: () => props.modelValue,
