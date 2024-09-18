@@ -13,28 +13,28 @@
       title="Rendas"
       :amount="incomeTotal"
       :last-amount="3000"
-      :loading="loadingTransactions"
+      :loading="pending"
       color="green"
     />
     <Trend
       title="Despesas"
       :amount="expenseTotal"
       :last-amount="3000"
-      :loading="loadingTransactions"
+      :loading="pending"
       color="red"
     />
     <Trend
       title="Investimento"
       :amount="400"
       :last-amount="3000"
-      :loading="loadingTransactions"
+      :loading="pending"
       color="green"
     />
     <Trend
       title="Economia"
       :amount="400"
       :last-amount="3000"
-      :loading="loadingTransactions"
+      :loading="pending"
       color="red"
     />
   </section>
@@ -61,7 +61,7 @@
 
   <section>
     <div
-      v-for="(transactionOnDay, date) in transactionsGroupedByDate"
+      v-for="(transactionOnDay, date) in byDate"
       :key="date"
       class="mb-10"
       v-if="!loadingTransactions"
@@ -72,7 +72,7 @@
         :key="transaction"
         :transaction="transaction"
         @delete-transaction="onDeleteTransaction"
-        :is-loading="deleteLoading"
+        :is-loading="pending"
       />
     </div>
     <div v-else>
@@ -84,92 +84,21 @@
 <script setup>
 import { transactionViewOptions } from '~/constants';
 
-const supabase = useSupabaseClient();
-const toast = useToast();
-
 const selectedView = ref(transactionViewOptions[1]);
-const transactions = ref([]);
-const loadingTransactions = ref(false);
-const deleteLoading = ref(false);
 const isOpen = ref(false);
 
-const income = computed(() =>
-  transactions.value.filter((t) => t.type === 'Renda'),
-);
-const expense = computed(() =>
-  transactions.value.filter((t) => t.type === 'Despesa'),
-);
-
-const incomeCount = computed(() => income.value.length);
-const expenseCount = computed(() => expense.value.length);
-
-const incomeTotal = computed(() =>
-  income.value.reduce((sum, transaction) => sum + transaction.amount, 0),
-);
-
-const expenseTotal = computed(() =>
-  expense.value.reduce((sum, transaction) => sum + transaction.amount, 0),
-);
-
-const fetchTransactions = async () => {
-  const { data } = await useAsyncData('transactions', async () => {
-    loadingTransactions.value = true;
-    try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select()
-        .order('created_at', { ascending: false });
-      if (error) return [];
-      return data;
-    } catch (error) {
-    } finally {
-      loadingTransactions.value = false;
-    }
-  });
-  transactions.value = data.value;
-};
+const {
+  pending,
+  fetchTransactions,
+  onDeleteTransaction,
+  transactions: {
+    incomeCount,
+    expenseCount,
+    incomeTotal,
+    expenseTotal,
+    grouped: { byDate }
+  }
+} = useFetchTransactions();
 
 await fetchTransactions();
-
-const transactionsGroupedByDate = computed(() => {
-  let grouped = {};
-  for (const transaction of transactions.value) {
-    const date = new Date(transaction.created_at).toISOString().split('T')[0];
-    if (!grouped[date]) {
-      grouped[date] = [];
-    }
-    grouped[date].push(transaction);
-  }
-  // Ordenação de datas
-  // const sortedKeys = Object.keys(grouped).sort().reverse();
-  // const sortedGroup = {};
-  // for (const key of sortedKeys) {
-  //   sortedGroup[key] = grouped[key];
-  // }
-  // return sortedGroup;
-  return grouped;
-});
-
-const onDeleteTransaction = async (transactionId) => {
-  deleteLoading.value = true;
-  try {
-    const response = await supabase
-      .from('transactions')
-      .delete()
-      .eq('id', transactionId);
-
-    toast.add({
-      title: 'Transação Deletada.',
-      icon: 'i-heroicons-check-circle',
-    });
-    await fetchTransactions();
-  } catch (error) {
-    toast.add({
-      title: 'Transação Deletada.',
-      icon: 'i-heroicons-exclamation-circle',
-    });
-  } finally {
-    deleteLoading.value = false;
-  }
-};
 </script>
