@@ -12,14 +12,14 @@
     <Trend
       title="Rendas"
       :amount="incomeTotal"
-      :last-amount="3000"
+      :last-amount="prevIncomeTotal"
       :loading="pending"
       color="green"
     />
     <Trend
       title="Despesas"
       :amount="expenseTotal"
-      :last-amount="3000"
+      :last-amount="prevExpenseTotal"
       :loading="pending"
       color="red"
     />
@@ -87,10 +87,13 @@ import { transactionViewOptions } from '~/constants';
 const selectedView = ref(transactionViewOptions[1]);
 const isOpen = ref(false);
 
+const { current, previous } = useSelectedTimePeriod(selectedView);
+
 const {
   pending,
   fetchTransactions,
   onDeleteTransaction,
+  refresh,
   transactions: {
     incomeCount,
     expenseCount,
@@ -98,7 +101,12 @@ const {
     expenseTotal,
     grouped: { byDate }
   }
-} = useFetchTransactions();
+} = useFetchTransactions(current);
 
-await fetchTransactions();
+const {
+  refresh: refreshPrevious,
+  transactions: { incomeTotal: prevIncomeTotal, expenseTotal: prevExpenseTotal }
+} = useFetchTransactions(previous);
+
+await Promise.all([refresh(), refreshPrevious()]);
 </script>

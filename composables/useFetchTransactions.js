@@ -1,4 +1,4 @@
-export const useFetchTransactions = () => {
+export const useFetchTransactions = (period) => {
   const supabase = useSupabaseClient();
   const toast = useToast();
 
@@ -24,24 +24,31 @@ export const useFetchTransactions = () => {
   );
 
   const fetchTransactions = async () => {
-    const { data } = await useAsyncData('transactions', async () => {
-      pending.value = true;
-      try {
-        const { data, error } = await supabase
-          .from('transactions')
-          .select()
-          .order('created_at', { ascending: false });
-        if (error) return [];
-        return data;
-      } catch (error) {
-      } finally {
-        pending.value = false;
+    const { data } = await useAsyncData(
+      `transactions-${period.value.from.toDateString()}-${period.value.to.toDateString()}`,
+      async () => {
+        pending.value = true;
+        try {
+          const { data, error } = await supabase
+            .from('transactions')
+            .select()
+            .gte('created_at', period.value.from.toISOString())
+            .lte('created_at', period.value.to.toISOString())
+            .order('created_at', { ascending: false });
+          if (error) return [];
+          return data;
+        } catch (error) {
+        } finally {
+          pending.value = false;
+        }
       }
-    });
+    );
     transactions.value = data.value;
   };
 
-  // const refresh = async () => (transactions.value = await fetchTransactions());
+  const refresh = async () => await fetchTransactions();
+
+  watch(period, async () => await fetchTransactions(), { immediate: true });
 
   const transactionsGroupedByDate = computed(() => {
     let grouped = {};
@@ -99,6 +106,7 @@ export const useFetchTransactions = () => {
     },
     pending,
     fetchTransactions,
-    onDeleteTransaction
+    onDeleteTransaction,
+    refresh
   };
 };
