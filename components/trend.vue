@@ -29,17 +29,19 @@ const props = defineProps({
   amount: Number,
   lastAmount: Number,
   color: String,
-  loading: Boolean,
+  loading: Boolean
 });
 
-const { currency } = useCurrency(props.amount);
+const { amount } = toRefs(props);
+
+const { currency } = useCurrency(amount);
 
 const trendingUp = computed(() => props.amount >= props.lastAmount);
 
 const icon = computed(() =>
   trendingUp.value
     ? 'i-heroicons:arrow-trending-up'
-    : 'i-heroicons:arrow-trending-down',
+    : 'i-heroicons:arrow-trending-down'
 );
 
 const percentageTrend = computed(() => {

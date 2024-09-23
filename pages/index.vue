@@ -64,7 +64,7 @@
       v-for="(transactionOnDay, date) in byDate"
       :key="date"
       class="mb-10"
-      v-if="!loadingTransactions"
+      v-if="!pending"
     >
       <DayliTransactionSumary :transactions="transactionOnDay" :date="date" />
       <Transaction
