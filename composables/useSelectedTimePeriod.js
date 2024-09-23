@@ -13,17 +13,17 @@ export const useSelectedTimePeriod = (period) => {
       case 'Anual':
         return {
           from: startOfYear(new Date()),
-          to: new Date()
+          to: endOfYear(new Date())
         };
       case 'Mensal':
         return {
           from: startOfMonth(new Date()),
-          to: new Date()
+          to: endOfMonth(new Date())
         };
       case 'Diário':
         return {
           from: startOfDay(new Date()),
-          to: new Date()
+          to: endOfDay(new Date())
         };
     }
   });
