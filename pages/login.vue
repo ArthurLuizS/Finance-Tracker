@@ -1,4 +1,5 @@
 <template>
+  <div id="buttonDiv"></div>
   <UCard v-if="!success">
     <template #header> Entrar no Mapa de Finanças </template>
 
@@ -37,6 +38,8 @@
 </template>
 
 <script setup>
+import jwtDecode from "jwt-decode";
+
 const success = ref(false);
 const email = ref('');
 const pending = ref(false);
@@ -68,4 +71,34 @@ const handleLogin = async () => {
     pending.value = false;
   }
 };
+
+onMounted(() => {
+  // Retirado da pagina de documentação do google: https://developers.google.com/identity/gsi/web/guides/display-button?hl=pt-br#javascript 
+  function handleCredentialResponse(response) {
+    const decodedCredential = jwtDecode(response.credential);
+
+    console.log(response)
+    console.log(decodedCredential)
+
+  }
+  if (typeof google !== 'undefined' && google.accounts) { 
+    google.accounts.id.initialize({
+      client_id: "113146705091-mm2t9q3q4fj5flq1ks1daqn902n7726n.apps.googleusercontent.com",
+      callback: handleCredentialResponse
+    });
+    google.accounts.id.renderButton( document.getElementById("buttonDiv"), 
+    { 
+      theme: "outline", 
+      size: "large",
+      type: "standard",
+      shape: "pill",
+      text: "continue_with",
+      size: "medium",
+      logo_alignment: "left",
+    } );
+    google.accounts.id.prompt(); 
+  }
+
+  
+})
 </script>
